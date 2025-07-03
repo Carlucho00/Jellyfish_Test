@@ -63,6 +63,20 @@ private:
 	void selectedorcafile_dialog();
 	std::string OrcaFilePath = "";
 
+  QLineEdit* selected_number_of_ci_states;
+  void select_number_of_ci_states();
+  int number_of_ci_states = 2;
+
 	void show_ci_energys();
 	QWidget* show_ci_energys_dialog;
+
+
+  QCheckBox* truncate_states_box;
+  bool truncate_states  = false; 
+  void select_truncate_states();
+
+  QLineEdit* truncation_state_lineedit;
+  int truncation_state= 0;
+  void select_truncation_state();
 };
+
