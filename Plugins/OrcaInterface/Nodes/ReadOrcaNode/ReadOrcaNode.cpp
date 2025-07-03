@@ -21,6 +21,11 @@ void ReadOrcaNode::LoadData(json Data, std::string file)
     this->has_orbital_energies_section = Data["has_orbital_energies_section"];
     this->has_molecular_orbitals_section = Data["has_molecular_orbitals_section"];
     this->has_tddft_excited_states_section = Data["has_tddft_excited_states_section"];
+    if(Data.find("truncate_states") != Data.end())
+    {
+        this->truncate_states = Data["truncate_states"];
+        this->truncation_state = Data["truncation_state"];
+    }
 
     if (State == NodeState::Calculated)
     {
@@ -102,7 +107,9 @@ json ReadOrcaNode::SaveData(std::string file)
     DataJson["has_orbital_energies_section"] = this->has_orbital_energies_section;
     DataJson["has_molecular_orbitals_section"] = this->has_molecular_orbitals_section;
     DataJson["has_tddft_excited_states_section"] = this->has_tddft_excited_states_section;
-
+    DataJson["truncate_states"] = this->truncate_states;
+    DataJson["truncation_state"] = this->truncation_state;
+    
     return DataJson;
 }
 
@@ -114,6 +121,8 @@ void ReadOrcaNode::calculate()
     pointcharges.clear();
 
     FileReader.set_OrcaFilePath(OrcaFilePath);
+    FileReader.set_TruncateStates(truncate_states);
+    FileReader.set_number_of_ci_states(truncation_state);
     FileReader.ReadFile();
 
     has_coordinates_section = FileReader.file_has_coordinates_section();
@@ -177,9 +186,25 @@ void ReadOrcaNode::NodeInspector(QWidget* Inspector)
     selectedorcafile_label->setText("Selected: " + QString::fromStdString(filename));
 
 
+    truncate_states_box = new QCheckBox;
+    truncate_states_box->setText("Truncate States");
+    truncate_states_box->setChecked(truncate_states);
+    connect(truncate_states_box, &QCheckBox::stateChanged, this, &ReadOrcaNode::select_truncate_states);
+
+    truncation_state_lineedit = new QLineEdit;
+    truncation_state_lineedit->setValidator(new QIntValidator(2, 100000000, this));
+    truncation_state_lineedit->setText(QString::number(truncation_state));
+    connect(truncation_state_lineedit, &QLineEdit::textChanged, this, &ReadOrcaNode::select_truncation_state);
+
+
+    lay->addWidget(truncate_states_box);
+    lay->addWidget(new QLabel("Select States"));
+    lay->addWidget(truncation_state_lineedit);
+
     lay->addWidget(new QLabel("Select Orca-File"));
     lay->addWidget(selectedorcafile_label);
     lay->addWidget(Select_OrcaFile);
+
 
     if (has_tddft_excited_states_section)
     {
@@ -189,6 +214,20 @@ void ReadOrcaNode::NodeInspector(QWidget* Inspector)
     }
 
     Inspector->setLayout(lay);
+}
+
+
+
+void ReadOrcaNode::select_truncate_states()
+{
+    this->truncate_states = this->truncate_states_box->isChecked();
+    PropertiesChanged();
+}
+
+void ReadOrcaNode::select_truncation_state()
+{
+    this->truncation_state = this->truncation_state_lineedit->text().toInt();
+    PropertiesChanged();
 }
 
 bool ReadOrcaNode::InPortAllowMultipleConnections(int Port)
