@@ -64,15 +64,22 @@ namespace QC
 		CI_strings.clear();
 	}
 
+
+	std::string ReadOrcaFile::removeNulls(const std::string& str) {
+        std::string result = str;
+        result.erase(std::remove(result.begin(), result.end(), '\0'), result.end());
+        return result;
+    }
+
 	void ReadOrcaFile::ReadAll()
 	{
-		std::fstream OrcaFile(this->OrcaFilePath);
+		std::ifstream OrcaFile(this->OrcaFilePath);
 		std::string OrcaFile_line;
-		int linenumber = 0;
 		while (std::getline(OrcaFile, OrcaFile_line))
 		{
 			AllLinesOfFile.push_back(OrcaFile_line);
 		}
+		OrcaFile.close();
 	}
 
 	void ReadOrcaFile::FindStartOfRelevantSections()
@@ -96,7 +103,7 @@ namespace QC
 				has_orbital_energies_section = true;
 				orbital_energies_section_start_line = i;
 			}
-			if (AllLinesOfFile[i].find("MOLECULAR ORBITALS") != std::string::npos) {
+			if (AllLinesOfFile[i].find("MOLECULAR ORBITALS (RHF, ROHF)") != std::string::npos) {
 				has_molecular_orbitals_section = true;
 				molecular_orbitals_section_start_line = i;
 			}
@@ -119,6 +126,8 @@ namespace QC
 			
 			QC::Pointcharge charge;
 			std::vector<std::string> splitted = split_string_in_strings(line);
+			
+	
 			charge.set_center(std::stod(splitted[1]) * A_to_Bohr, std::stod(splitted[2]) * A_to_Bohr, std::stod(splitted[3]) * A_to_Bohr);
 			charge.set_charge(atom_charge_map[splitted[0]]);
 			electrons += atom_charge_map[splitted[0]];
@@ -357,10 +366,11 @@ namespace QC
 			CI_Matrix(i, 1) = first_ci_vec_values[i];
 		}
 
-		//Insert Rest
+		int number_excitations_readable = (TruncateStates)? std::min((int)((CI_strings.size() - 1) / 2), number_of_ci_states): (int)((CI_strings.size() - 1) / 2);
 		int number_excitations = (CI_strings.size() - 1) / 2;
 
-		for (int ci_vec_num = 2; ci_vec_num < number_excitations + 1; ci_vec_num++)
+
+		for (int ci_vec_num = 2; ci_vec_num < number_excitations_readable + 1; ci_vec_num++)
 		{
 			if(split_string_in_strings(AllLinesOfFile[line_to_read]).size() == 0) return;
 			CI_Energys(ci_vec_num) = std::stod(split_string_in_strings(AllLinesOfFile[line_to_read])[3]) + scf_energy;
@@ -682,6 +692,7 @@ namespace QC
 		std::istringstream iss(string);
 		std::string s;
 		while (std::getline(iss, s, (char)0x20)) {
+			s=removeNulls(s);
 			if(s != "")
 				return_vec.push_back(s);
 		}
