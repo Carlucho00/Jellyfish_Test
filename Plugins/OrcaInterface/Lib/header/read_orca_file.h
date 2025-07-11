@@ -35,6 +35,8 @@ namespace QC
 		std::vector<QC::Configuration> CI_strings;
 		Eigen::MatrixXd CI_Matrix;
 		Eigen::VectorXd CI_Energys;
+		int  number_of_ci_states;
+		bool TruncateStates = false;
 
 	public:
 		void set_OrcaFilePath(std::string OrcaFilePath) {this->OrcaFilePath = OrcaFilePath;}
@@ -64,6 +66,11 @@ namespace QC
 		}
 		Eigen::MatrixXd get_CI_Matrix() { return CI_Matrix; }
 		Eigen::VectorXd get_CI_Energys() { return CI_Energys; }
+		std::string removeNulls(const std::string& str);
+
+		void set_TruncateStates(bool TruncateStates) { this->TruncateStates = TruncateStates; }
+		void set_number_of_ci_states(int number_of_ci_states){this->number_of_ci_states = number_of_ci_states;}
+		
 
 	private:
 		void ResetData();
